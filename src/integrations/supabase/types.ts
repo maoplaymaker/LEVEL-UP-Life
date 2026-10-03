@@ -67,6 +67,7 @@ export type Database = {
           handle: string
           locale: string
           onboarding_complete: boolean
+          questionnaire: Json | null
           updated_at: string
           user_id: string
         }
@@ -77,6 +78,7 @@ export type Database = {
           handle?: string
           locale?: string
           onboarding_complete?: boolean
+          questionnaire?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -87,6 +89,7 @@ export type Database = {
           handle?: string
           locale?: string
           onboarding_complete?: boolean
+          questionnaire?: Json | null
           updated_at?: string
           user_id?: string
         }
