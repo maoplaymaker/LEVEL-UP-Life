@@ -10,7 +10,7 @@ export function freshStart(base: DashboardData, name: string, handle: string): D
     ...base,
     player: { ...base.player, name, handle, level: 1, currentXp: 0, nextLevelXp: 100, totalPoints: 0, streak: 0, multiplier: 1 },
     lifeStats: base.lifeStats.map((s) => ({ ...s, level: 1, xp: 0, nextLevelXp: statLevelXp(1) })),
-    missions: base.missions.map((m) => ({ ...m, completed: false, completedOn: undefined, checklist: m.checklist?.map((c) => ({ ...c, done: false })) })),
+    missions: base.missions.map(({ completedOn: _done, ...m }) => ({ ...m, completed: false, ...(m.checklist ? { checklist: m.checklist.map((c) => ({ ...c, done: false })) } : {}) })),
     achievements: base.achievements.map((a) => ({ ...a, unlocked: false, progress: 0 })),
     coupons: [],
     shared: [],
