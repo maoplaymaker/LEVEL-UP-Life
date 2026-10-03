@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      player_progress: {
+        Row: {
+          current_xp: number
+          equipped: Json
+          level: number
+          lifecoins: number
+          next_level_xp: number
+          owned_items: Json
+          owned_themes: Json
+          streak: number
+          theme_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_xp?: number
+          equipped?: Json
+          level?: number
+          lifecoins?: number
+          next_level_xp?: number
+          owned_items?: Json
+          owned_themes?: Json
+          streak?: number
+          theme_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_xp?: number
+          equipped?: Json
+          level?: number
+          lifecoins?: number
+          next_level_xp?: number
+          owned_items?: Json
+          owned_themes?: Json
+          streak?: number
+          theme_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          bio: string
+          created_at: string
+          display_name: string
+          handle: string
+          locale: string
+          onboarding_complete: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string
+          created_at?: string
+          display_name?: string
+          handle?: string
+          locale?: string
+          onboarding_complete?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string
+          created_at?: string
+          display_name?: string
+          handle?: string
+          locale?: string
+          onboarding_complete?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          id: string
+          progress: number
+          unlocked: boolean
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          id?: string
+          progress?: number
+          unlocked?: boolean
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          id?: string
+          progress?: number
+          unlocked?: boolean
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
