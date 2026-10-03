@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           current_xp: number
           equipped: Json
+          game_state: Json | null
           level: number
           lifecoins: number
           next_level_xp: number
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           current_xp?: number
           equipped?: Json
+          game_state?: Json | null
           level?: number
           lifecoins?: number
           next_level_xp?: number
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           current_xp?: number
           equipped?: Json
+          game_state?: Json | null
           level?: number
           lifecoins?: number
           next_level_xp?: number
