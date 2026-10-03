@@ -35,6 +35,8 @@ import {
   CATEGORIES, applyStatXp, getLevelRank, levelUpService, onTaskComplete,
 } from "@/lib/level-up-service";
 import { cn } from "@/lib/utils";
+import { loadGame, saveGame } from "@/lib/game-sync";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,15 +78,35 @@ function Index() {
 
   const update: Update = (fn) => setData((d) => (d ? fn(d) : d));
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [synced, setSynced] = useState(false);
+
   const loadDashboard = async () => {
     setLoading(true);
     setError("");
-    try { setData(await levelUpService.getDashboard()); }
+    setSynced(false);
+    try {
+      const loaded = await loadGame(await levelUpService.getDashboard());
+      setUserId(loaded.userId);
+      setData(loaded.data);
+      setSynced(true);
+    }
     catch (caught) { setError(caught instanceof Error ? caught.message : "err.server"); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { void loadDashboard(); }, []);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") { if (event === "SIGNED_IN") setView("dashboard"); void loadDashboard(); }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (!data || !synced) return;
+    const timer = setTimeout(() => { saveGame(data, userId).catch(() => toast.error(t("toast.syncFail"))); }, 800);
+    return () => clearTimeout(timer);
+  }, [data, userId, synced, t]);
   useEffect(() => { document.documentElement.setAttribute("data-theme", data?.themeId ?? "cyber"); }, [data?.themeId]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [view]);
 
