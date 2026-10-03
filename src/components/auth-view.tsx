@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 const starterSlots: Slot[] = ["character", "outfit", "accessory"];
 const defaultAvatar: AvatarState = { equipped: { character: "char_runner", outfit: "outfit_street", accessory: null, scene: "scene_city", pet: null, aura: null } };
 
+type Questionnaire = { sex: string; age: string; area: string; energy: string; mood: string };
+const emptyQuestionnaire: Questionnaire = { sex: "", age: "", area: "", energy: "", mood: "" };
+
 export function AuthView() {
   const { t, locale } = useI18n();
   const [mode, setMode] = useState<"signup" | "signin">("signup");
@@ -23,8 +26,9 @@ export function AuthView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [avatar, setAvatar] = useState(defaultAvatar);
+  const [quiz, setQuiz] = useState<Questionnaire>(emptyQuestionnaire);
   const [busy, setBusy] = useState(false);
-  const steps = [t("auth.account"), t("auth.character"), t("auth.outfit"), t("auth.accessory"), t("auth.ready")];
+  const steps = [t("auth.account"), t("auth.profile"), t("auth.character"), t("auth.outfit"), t("auth.accessory"), t("auth.ready")];
 
   const choose = (slot: Slot, id: string) => setAvatar((current) => ({ ...current, equipped: { ...current.equipped, ...(slot === "character" && current.equipped.character !== id ? { outfit: null, accessory: null } : {}), [slot]: id } }));
   const submit = async (event: FormEvent) => {
