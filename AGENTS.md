@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- App images live as CDN pointers in src/assets/**/*.asset.json; import the pointer and use `.url` (accessory renders load via import.meta.glob on accfit/*.png.asset.json). Why: keeps ~400MB of images out of the repo.
