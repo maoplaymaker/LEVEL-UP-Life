@@ -12,4 +12,21 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Pre-bundle deps Vite otherwise discovers late; a late re-optimize reloads the page
+    // mid-load and breaks the lazy route chunk ("Failed to fetch dynamically imported module").
+    optimizeDeps: {
+      include: [
+        "@tanstack/router-core",
+        "@tanstack/router-core/isServer",
+        "@tanstack/router-core/ssr/client",
+        "seroval",
+        "@supabase/supabase-js",
+        "eventsource-parser",
+        "lucide-react",
+        "sonner",
+        "zod",
+      ],
+    },
+  },
 });
