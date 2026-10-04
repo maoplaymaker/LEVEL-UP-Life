@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 const starterSlots: Slot[] = ["character", "outfit", "accessory"];
 const defaultAvatar: AvatarState = { equipped: { character: "char_runner", outfit: "outfit_street", accessory: null, scene: "scene_city", pet: null, aura: null } };
 
+type Questionnaire = { sex: string; age: string; area: string; energy: string; mood: string };
+const emptyQuestionnaire: Questionnaire = { sex: "", age: "", area: "", energy: "", mood: "" };
+
 export function AuthView() {
   const { t, locale } = useI18n();
   const [mode, setMode] = useState<"signup" | "signin">("signup");
@@ -23,8 +26,9 @@ export function AuthView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [avatar, setAvatar] = useState(defaultAvatar);
+  const [quiz, setQuiz] = useState<Questionnaire>(emptyQuestionnaire);
   const [busy, setBusy] = useState(false);
-  const steps = [t("auth.account"), t("auth.character"), t("auth.outfit"), t("auth.accessory"), t("auth.ready")];
+  const steps = [t("auth.account"), t("auth.profile"), t("auth.character"), t("auth.outfit"), t("auth.accessory"), t("auth.ready")];
 
   const choose = (slot: Slot, id: string) => setAvatar((current) => ({ ...current, equipped: { ...current.equipped, ...(slot === "character" && current.equipped.character !== id ? { outfit: null, accessory: null } : {}), [slot]: id } }));
   const submit = async (event: FormEvent) => {
@@ -40,7 +44,7 @@ export function AuthView() {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
       if (error) throw error;
       if (data.user) {
-        await supabase.from("profiles").upsert({ user_id: data.user.id, display_name: name, handle: handle.startsWith("@") ? handle : `@${handle}`, locale, onboarding_complete: true });
+        await supabase.from("profiles").upsert({ user_id: data.user.id, display_name: name, handle: handle.startsWith("@") ? handle : `@${handle}`, locale, onboarding_complete: true, questionnaire: { ...quiz, age: quiz.age ? Number(quiz.age) : null } });
         await supabase.from("player_progress").upsert({ user_id: data.user.id, equipped: avatar.equipped, owned_items: Object.values(avatar.equipped).filter(Boolean) });
       }
       toast.success(t("auth.checkEmail"));
@@ -62,20 +66,39 @@ export function AuthView() {
     </form>
   );
 
-  const slot = starterSlots[step - 1];
+  const slot = starterSlots[step - 2];
+  const quizDone = quiz.sex && quiz.age && quiz.area && quiz.energy && quiz.mood;
   return (
     <div className="animate-fade-in">
       <PageTitle eyebrow={t("auth.eyebrow")} title={t("auth.title")} subtitle={t("auth.subtitle")} action={<Button variant="outline" onClick={() => setMode("signin")}><LockKeyhole />{t("auth.signin")}</Button>} />
-      <div className="mb-6 grid grid-cols-5 gap-1" aria-label={t("auth.progress")}>{steps.map((label, index) => <div key={label} className={cn("border-t-2 pt-2 text-center font-mono text-[9px] uppercase", index <= step ? "border-neon text-neon" : "border-border text-muted-foreground")}>{label}</div>)}</div>
+      <div className="mb-6 grid grid-cols-6 gap-1" aria-label={t("auth.progress")}>{steps.map((label, index) => <div key={label} className={cn("border-t-2 pt-2 text-center font-mono text-[9px] uppercase", index <= step ? "border-neon text-neon" : "border-border text-muted-foreground")}>{label}</div>)}</div>
       <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <div className="space-y-4"><AvatarFigure avatar={avatar} className="aspect-[4/5] w-full border border-electric/30" /><p className="text-center font-mono text-xs uppercase text-electric">{steps[step]}</p></div>
         <div className="border border-border bg-card/70 p-5 sm:p-7">
           {step === 0 && <div className="space-y-5"><Field label={t("auth.name")}><Input required value={name} onChange={(e) => setName(e.target.value)} /></Field><Field label={t("auth.handle")}><Input required value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="@alex" /></Field><Field label={t("auth.email")}><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field><Field label={t("auth.password")}><Input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></Field></div>}
+          {step === 1 && <QuizStep quiz={quiz} onChange={setQuiz} />}
           {slot && <ChoiceGrid slot={slot} avatar={avatar} onChoose={choose} />}
-          {step === 4 && <div className="py-10 text-center"><UserRound className="mx-auto h-14 w-14 text-neon" /><h2 className="mt-5 text-2xl font-bold">{t("auth.readyTitle", { name: name || t("auth.player") })}</h2><p className="mt-2 text-muted-foreground">{t("auth.readySub")}</p></div>}
-          <div className="mt-7 flex justify-between"><Button type="button" variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}><ArrowLeft />{t("auth.back")}</Button>{step < 4 ? <Button type="button" disabled={step === 0 && (!name || !handle || !email || password.length < 8)} onClick={() => setStep((s) => s + 1)}>{t("auth.next")}<ArrowRight /></Button> : <Button type="submit" disabled={busy}>{busy ? <LoaderCircle className="animate-spin" /> : <Check />}{t("auth.create")}</Button>}</div>
+          {step === 5 && <div className="py-10 text-center"><UserRound className="mx-auto h-14 w-14 text-neon" /><h2 className="mt-5 text-2xl font-bold">{t("auth.readyTitle", { name: name || t("auth.player") })}</h2><p className="mt-2 text-muted-foreground">{t("auth.readySub")}</p></div>}
+          <div className="mt-7 flex justify-between"><Button type="button" variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}><ArrowLeft />{t("auth.back")}</Button>{step < 5 ? <Button type="button" disabled={(step === 0 && (!name || !handle || !email || password.length < 8)) || (step === 1 && !quizDone)} onClick={() => setStep((s) => s + 1)}>{t("auth.next")}<ArrowRight /></Button> : <Button type="submit" disabled={busy}>{busy ? <LoaderCircle className="animate-spin" /> : <Check />}{t("auth.create")}</Button>}</div>
         </div>
       </form>
+    </div>
+  );
+}
+
+function QuizStep({ quiz, onChange }: { quiz: Questionnaire; onChange: (q: Questionnaire) => void }) {
+  const { t } = useI18n();
+  const set = (key: keyof Questionnaire, value: string) => onChange({ ...quiz, [key]: value });
+  const group = (key: keyof Questionnaire, label: string, options: string[]) => (
+    <Field label={label}><div className="grid gap-2 sm:grid-cols-2">{options.map((option) => <Button type="button" variant="outline" key={option} onClick={() => set(key, option)} className={cn("h-auto min-h-12 justify-start p-3 text-left", quiz[key] === option && "border-neon bg-neon/10 text-neon")}><span>{t(`auth.q.${key}.${option}`)}</span>{quiz[key] === option && <Check className="ml-auto" />}</Button>)}</div></Field>
+  );
+  return (
+    <div className="space-y-5">
+      {group("sex", t("auth.q.sex"), ["female", "male", "other"])}
+      <Field label={t("auth.q.age")}><Input type="number" required min={5} max={120} value={quiz.age} onChange={(e) => set("age", e.target.value)} placeholder={t("auth.q.agePlaceholder")} /></Field>
+      {group("area", t("auth.q.area"), ["health", "mind", "study", "money", "social"])}
+      {group("energy", t("auth.q.energy"), ["low", "mid", "high"])}
+      {group("mood", t("auth.q.mood"), ["stuck", "ok", "great"])}
     </div>
   );
 }
