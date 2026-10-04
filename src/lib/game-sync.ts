@@ -1,16 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { statLevelXp, type DashboardData } from "@/lib/level-up-service";
+import { statLevelXp, type Category, type DashboardData } from "@/lib/level-up-service";
 
 const GUEST_KEY = "levelup-guest-state";
 
-/** A brand-new account starts from zero, keeping the starter missions and catalog. */
-export function freshStart(base: DashboardData, name: string, handle: string): DashboardData {
+/** Maps the signup questionnaire "area" answer to a game category. */
+const AREA_TO_CATEGORY: Record<string, Category> = {
+  health: "Salud",
+  mind: "Espiritualidad",
+  study: "Estudio",
+  money: "Finanzas",
+  social: "Relaciones",
+};
+
+interface QuestionnaireAnswers { area?: string; energy?: string }
+
+/** A brand-new account starts from zero, keeping the starter missions and catalog.
+ *  When the signup questionnaire is present, missions in the chosen area come
+ *  first; with low energy, easy missions lead so the first steps feel doable. */
+export function freshStart(base: DashboardData, name: string, handle: string, quiz?: QuestionnaireAnswers | null): DashboardData {
+  const focus = quiz?.area ? AREA_TO_CATEGORY[quiz.area] : undefined;
+  const easyFirst = quiz?.energy === "low";
+  const difficultyRank = (d: string) => (d === "Fácil" ? 0 : d === "Media" ? 1 : 2);
+  const missions = base.missions
+    .map(({ completedOn: _done, ...m }) => ({ ...m, completed: false, ...(m.checklist ? { checklist: m.checklist.map((c) => ({ ...c, done: false })) } : {}) }))
+    .sort((a, b) =>
+      (focus ? (a.category === focus ? 0 : 1) - (b.category === focus ? 0 : 1) : 0) ||
+      (easyFirst ? difficultyRank(a.difficulty) - difficultyRank(b.difficulty) : 0),
+    );
   return {
     ...base,
     player: { ...base.player, name, handle, level: 1, currentXp: 0, nextLevelXp: 100, totalPoints: 0, streak: 0, multiplier: 1 },
     lifeStats: base.lifeStats.map((s) => ({ ...s, level: 1, xp: 0, nextLevelXp: statLevelXp(1) })),
-    missions: base.missions.map(({ completedOn: _done, ...m }) => ({ ...m, completed: false, ...(m.checklist ? { checklist: m.checklist.map((c) => ({ ...c, done: false })) } : {}) })),
+    missions,
     achievements: base.achievements.map((a) => ({ ...a, unlocked: false, progress: 0 })),
     coupons: [],
     shared: [],
@@ -32,14 +54,14 @@ export async function loadGame(base: DashboardData): Promise<{ data: DashboardDa
   }
   const [{ data: progress }, { data: profile }] = await Promise.all([
     supabase.from("player_progress").select("game_state, equipped").eq("user_id", user.id).maybeSingle(),
-    supabase.from("profiles").select("display_name, handle").eq("user_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("display_name, handle, questionnaire").eq("user_id", user.id).maybeSingle(),
   ]);
   const name = profile?.display_name || user.email?.split("@")[0] || "Player";
   const handle = profile?.handle || `@${name.toLowerCase()}`;
   const saved = progress?.game_state as Partial<DashboardData> | null | undefined;
   const data = saved
     ? { ...base, ...saved, player: { ...base.player, ...saved.player, name, handle } }
-    : freshStart(base, name, handle);
+    : freshStart(base, name, handle, profile?.questionnaire as QuestionnaireAnswers | null);
   if (!saved && progress?.equipped && typeof progress.equipped === "object") {
     data.avatar = { equipped: { ...data.avatar.equipped, ...(progress.equipped as object) } };
   }
