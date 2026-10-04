@@ -315,7 +315,7 @@ function Dashboard({ data, completedToday, busyId, onComplete, onSeeMissions, on
           <div className="min-w-0"><p className="font-mono text-[10px] uppercase text-electric">{t("dash.queue")}</p><h2 className="mt-1 truncate text-2xl font-bold">{t("dash.next")}</h2></div>
           <Button variant="ghost" onClick={onSeeMissions} className="shrink-0 text-electric">{t("dash.seeAll")} <ChevronRight /></Button>
         </div>
-        <div className="space-y-3">{active.map((m) => <MissionRow key={m.id} mission={m} busy={busyId === m.id} onComplete={onComplete} />)}</div>
+        <div className="max-w-2xl space-y-2.5">{active.map((m) => <MissionRow key={m.id} mission={m} busy={busyId === m.id} onComplete={onComplete} />)}</div>
       </section>
 
       <button type="button" hidden={!import.meta.env.DEV} onClick={onSimulateError} className="text-xs text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground">{t("dash.simError")}</button>
@@ -346,9 +346,9 @@ function MissionsView({ missions, busyId, onComplete, onAdd, onEdit }: { mission
       {(["daily", "main"] as TaskType[]).map((type) => {
         const items = missions.filter((m) => m.type === type);
         return (
-          <section key={type} className="mb-9">
+          <section key={type} className="mb-9 max-w-2xl">
             <div className="mb-4 flex items-center gap-3"><div className={cn("h-px flex-1", type === "daily" ? "bg-neon/30" : "bg-violet/30")} /><h2 className="font-mono text-xs uppercase text-muted-foreground">{t(type === "daily" ? "mis.daily" : "mis.main")} · {items.filter((i) => i.completed).length}/{items.length}</h2></div>
-            <div className="space-y-3">{items.map((m) => <MissionRow key={m.id} mission={m} busy={busyId === m.id} onComplete={onComplete} onEdit={onEdit} />)}</div>
+            <div className="space-y-2.5">{items.map((m) => <MissionRow key={m.id} mission={m} busy={busyId === m.id} onComplete={onComplete} onEdit={onEdit} />)}</div>
           </section>
         );
       })}
@@ -362,20 +362,20 @@ function MissionRow({ mission, busy, onComplete, onEdit }: { mission: Mission; b
   const Icon = categoryIcon[mission.category];
   return (
      <Card className={cn("mission-tile group overflow-hidden rounded-md bg-card/90 transition-all", mission.completed && "mission-tile-done opacity-55")}>
-      <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4 sm:gap-5 sm:p-5">
-         <Button aria-label={mission.completed ? t("mis.done") : t("mis.complete", { title })} size="icon" variant="outline" disabled={mission.completed || busy} onClick={() => onComplete(mission)} className={cn("mission-complete h-10 w-10 shrink-0 rounded-full", !mission.completed && "border-neon/40 text-neon hover:bg-neon/10", mission.completed && "border-neon bg-neon text-primary-foreground")}>
+      <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 sm:gap-4 sm:p-4">
+         <Button aria-label={mission.completed ? t("mis.done") : t("mis.complete", { title })} size="icon" variant="outline" disabled={mission.completed || busy} onClick={() => onComplete(mission)} className={cn("mission-complete h-9 w-9 shrink-0 rounded-full", !mission.completed && "border-neon/40 text-neon hover:bg-neon/10", mission.completed && "border-neon bg-neon text-primary-foreground")}>
           {busy ? <LoaderCircle className="animate-spin" /> : mission.completed ? <Check /> : <Target />}
         </Button>
         <div className="min-w-0">
           <p className={cn("truncate font-semibold", mission.completed && "line-through")}>{title}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={categoryClass[mission.category]}><Icon className="mr-1 h-3 w-3" />{t(`cat.${mission.category}`)}</Badge>
             <span className="font-mono text-[10px] uppercase text-muted-foreground">{t(`diff.${mission.difficulty}`)}</span>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <span className="font-mono text-xs font-semibold text-neon sm:text-sm">+{mission.xp} XP</span>
-           {onEdit && <Button aria-label={t("mis.edit", { title })} variant="ghost" size="icon" onClick={() => onEdit(mission)} className="mission-edit text-muted-foreground opacity-70 hover:text-electric sm:opacity-0 sm:group-hover:opacity-100"><Edit3 /></Button>}
+           {onEdit && <Button aria-label={t("mis.edit", { title })} variant="ghost" size="icon" onClick={() => onEdit(mission)} className="mission-edit h-8 w-8 text-muted-foreground opacity-70 hover:text-electric sm:opacity-0 sm:group-hover:opacity-100"><Edit3 /></Button>}
         </div>
       </CardContent>
     </Card>
